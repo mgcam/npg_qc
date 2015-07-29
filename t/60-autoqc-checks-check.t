@@ -219,7 +219,7 @@ subtest 'filename generation' => sub {
     is($p->create_filename($m, 1), '5_1_1', '5_1_1');
     is($p->create_filename($m, 't'), '5_1_t', '5_1_t');
     is($p->create_filename($m, 2), '5_1_2', '5_1_2');
-    $m->{'tag_index'} = '3';
+    $m->{'tag_index'} = 3;
     is($p->create_filename($m), '5_1#3', '5_1 tag 3');
     is($p->create_filename($m,1), '5_1_1#3', '5_1_1 tag 3');
     is($p->create_filename($m,2), '5_1_2#3', '5_1_2 tag 3');
