@@ -286,7 +286,7 @@ sub create_filename {
     $map->{'id_run'},
     $map->{'position'},
     $end ? "_$end" : q[],
-    defined $map->{'tag_index'} ? q[#].$map->{'tag_index'} : q[];
+    defined $map->{'tag_index'} ? sprintf '#%i', $map->{'tag_index'} : q[];
 }
 
 no MooseX::ClassAttribute;
@@ -326,6 +326,10 @@ __END__
 =item npg_tracking::glossary::tag
 
 =item npg_tracking::util::types
+
+=item Perl6::Slurp;
+
+=item Readonly
 
 =back
 
