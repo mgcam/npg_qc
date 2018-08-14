@@ -18,6 +18,7 @@ define([], function () {
     ' </tr>',
     ' <tr><th class="check_labels">decode rate, %<br />CV %</th></tr>',
     ' </thead>',
+    ' <tbody>',
     ' </tr><tr id="rpt_key:18000:1">',
     '  <td class="lib nbsp"></td>',
     '  <td class="id_run"><div class="rel_pos_container"><br />158</div></td>',
@@ -56,6 +57,7 @@ define([], function () {
     '   <a href="#18000:4">4   </a><span class="lane_mqc_control"></span></td> <td class="check_summary passed"><a href="#tmc_18000:4">99.18</a><br />',
     '   <span class="dark_blue"><a href="#tmc_18000:4">38.88</a></span></td>',
     ' </tr>',
+    ' </tbody>',
     '</table>'
   ].join("\n");
 
@@ -77,6 +79,7 @@ define([], function () {
     ' </tr>',
     ' <tr><th class="check_labels">decode rate, %<br />CV %</th></tr>',
     ' </thead>',
+    ' <tbody>',
     ' </tr><tr id="rpt_key:18000:1">',
     '  <td class="lib nbsp">',
     '  </td>',
@@ -99,6 +102,7 @@ define([], function () {
     '   <a href="#18000:2">2   </a><span class="lane_mqc_control"></span></td> <td class="check_summary passed"><a href="#tmc_18000:2">99.18</a><br />',
     '   <span class="dark_blue"><a href="#tmc_18000:2">38.88</a></span></td>',
     ' </tr>',
+    ' </tbody>',
     '</table>'
   ].join("\n");
 
@@ -196,6 +200,8 @@ define([], function () {
     '    <tr>',
     '      <th class="check_labels">decode rate, %<br>CV %</th>',
     '    </tr>',
+    '  </thead>',
+    '  <tbody>',
     '    <tr id="rpt_key:18000:2">',
     '      <td class="lib nbsp"><div class="rel_pos_container"><span class="lib nbsp">NT743240I</span></div></td>',
     '      <td class="id_run"><div class="rel_pos_container">18000<br>158</div></td>',
@@ -230,6 +236,7 @@ define([], function () {
     '      <td class="tag_info"><a href="#18000:2:0">0</a> </td>',
     '      <td class="check_summary outcome_unknown">0.82</td>',
     '    </tr>',
+    '  </tbody>',
     '</table>'
   ].join("\n");
 
@@ -249,4 +256,3 @@ define([], function () {
     fixtures_menu_links:        fixtures_menu_links
   };
 });
-
