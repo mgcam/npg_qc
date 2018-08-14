@@ -90,10 +90,10 @@ sub _add_npg_data {
 
   my $product_metric = $self->product_metrics_row();
   my $init_values = {};
-  $init_values->{'id_run'}         = $product_metric->id_run;
-  $init_values->{'position'}       = $product_metric->position;
-  $init_values->{'num_cycles'}     = $product_metric->iseq_run_lane_metric->cycles;
-  $init_values->{'time_comp'}      = $product_metric->iseq_run_lane_metric->run_complete;
+  $init_values->{'id_run'}     = $product_metric->id_run;
+  $init_values->{'position'}   = $product_metric->position;
+  $init_values->{'num_cycles'} = $product_metric->iseq_run_lane_metric->cycles;
+  $init_values->{'time_comp'}  = $product_metric->iseq_run_lane_metric->run_complete;
   if ($self->is_plex) {
     $init_values->{'tag_index'}    = $product_metric->tag_index;
     $init_values->{'tag_sequence'} = $product_metric->tag_sequence4deplexing;
@@ -107,10 +107,10 @@ sub _add_lims_data {
 
   my $flowcell = $self->product_metrics_row->iseq_flowcell;
   $init_values ||= {};
-  $init_values->{'is_pool'}          = $self->is_pool;
-  $init_values->{'lims_live'}        = 1;
-  $init_values->{'is_control'}       = 0;
-  $init_values->{'rnd'}              = 0;
+  $init_values->{'is_pool'}    = $self->is_pool;
+  $init_values->{'lims_live'}  = 1;
+  $init_values->{'is_control'} = 0;
+  $init_values->{'rnd'}        = 0;
 
   if ( defined $flowcell ) {
 
@@ -156,7 +156,7 @@ Class method, returns true if the entity is subject to manual QC.
 =cut
 sub qc_able {
   my ($self, $is_control, $tag_index) = @_;
-  return ($is_control || (defined $tag_index && $tag_index == 0) ) ? 0 : 1;
+  return ( $is_control || (defined $tag_index && $tag_index == 0) ) ? 0 : 1;
 }
 
 __PACKAGE__->meta->make_immutable;
