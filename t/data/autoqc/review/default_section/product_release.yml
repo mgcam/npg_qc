@@ -3,8 +3,10 @@ default:
   irods:
     enable: true
   robo_qc:
+    qc_type: "mqc_lane"
     criteria:
-      - applicability_criteria:
+      - qc_type: "mqc"
+        applicability_criteria:
           lims:
             library_type:
               - "HiSeqX PCR free"

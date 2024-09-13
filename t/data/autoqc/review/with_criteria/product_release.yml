@@ -23,6 +23,7 @@ study:
     merge:
       component_cache_dir: "/merge_component_cache/4042/"
     robo_qc:
+      qc_type: "mqc"
       criteria:
         - applicability_criteria:
             lims:

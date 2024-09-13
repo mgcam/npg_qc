@@ -106,9 +106,9 @@ RoboQC definitions. Library Manual QC is configured as C<qc_type: "mqc">.
 The other recognised type is C<mqc_lane>, which is only compatible with
 lane-level entities.
 
-If the Robo QC type is not defined directly in the top-level section,
-it should be defined for each of the criteria individually. The definition
-on teh criteria level takes precedence.
+If the QC type is not defined directly in the top-level section, it should
+be defined for each of the criteria individually. The definition on the
+criteria level takes precedence.
 
 =head2 Rules for assignment of the QC outcome
 
@@ -598,7 +598,10 @@ sub _build__outcome_type {
   if (!$outcome_type) {
     $outcome_type = $self->_robo_config()->{$QC_TYPE_KEY};
   }
-  $outcome_type ||= $QC_TYPE_LIB;
+
+  if (!$outcome_type) {
+    croak 'QC type is not defined in a RoboQC config for ' . $self->_entity_desc;
+  }
 
   if (none { $outcome_type eq $_ } @VALID_QC_TYPES) {
     croak "Invalid QC type '$outcome_type' in a RoboQC config for " .

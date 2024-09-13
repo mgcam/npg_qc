@@ -31,7 +31,8 @@ study:
         pp_staging_root: "{{ lustre_mount }}/climb_upload"
     robo_qc:
       criteria:
-        - applicability_criteria:
+        - qc_type: "mqc"
+          applicability_criteria:
             lims:
               sample_is_control:
                 - 0
@@ -39,7 +40,8 @@ study:
           acceptance_criteria :
             - &heron_robo_realsample_ac1 "generic:ncov2019_artic_nf.doc->{meta}->{'num_input_reads'} and (generic:ncov2019_artic_nf.doc->{'QC summary'}->{qc_pass} eq 'TRUE')"
             - &heron_robo_realsample_ac2 "(generic:ncov2019_artic_nf.doc->{meta}->{'max_negative_control_filtered_read_count'} < 100) or ((generic:ncov2019_artic_nf.doc->{meta}->{'max_negative_control_filtered_read_count'} <= 1000) and (generic:ncov2019_artic_nf.doc->{'QC summary'}->{num_aligned_reads} > 100 * generic:ncov2019_artic_nf.doc->{meta}->{'max_negative_control_filtered_read_count'}))"
-        - applicability_criteria:
+        - qc_type: "mqc"
+          applicability_criteria:
             lims:
               sample_is_control:
                 - 1
@@ -48,7 +50,8 @@ study:
           acceptance_criteria :
             - *heron_robo_realsample_ac1
             - *heron_robo_realsample_ac2
-        - applicability_criteria:
+        - qc_type: "mqc"
+          applicability_criteria:
             lims:
               sample_is_control:
                 - 1

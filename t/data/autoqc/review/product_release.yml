@@ -25,7 +25,8 @@ study:
       component_cache_dir: "/merge_component_cache/5392/"
     robo_qc:
       criteria:
-        - applicability_criteria:
+        - qc_type: "mqc"
+          applicability_criteria:
             lims:
               library_type:
                 - "HiSeqX PCR free"
