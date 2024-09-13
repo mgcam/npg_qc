@@ -31,8 +31,9 @@ Readonly::Scalar my $LIMS_APPLICABILITY_CRITERIA_KEY => q[lims];
 Readonly::Scalar my $SEQ_APPLICABILITY_CRITERIA_KEY => q[sequencing_run];
 Readonly::Scalar my $ACCEPTANCE_CRITERIA_KEY    => q[acceptance_criteria];
 
-Readonly::Scalar my $QC_TYPE_DEFAULT  => q[mqc];
-Readonly::Array  my @VALID_QC_TYPES   => ($QC_TYPE_DEFAULT);
+Readonly::Scalar my $QC_TYPE_LIB    => q[mqc];
+Readonly::Scalar my $QC_TYPE_LANE   => q[mqc_lane];
+Readonly::Array  my @VALID_QC_TYPES => ($QC_TYPE_LIB, $QC_TYPE_LANE);
 
 Readonly::Scalar my $TIMESTAMP_FORMAT_WOFFSET => q[%Y-%m-%dT%T%z];
 
@@ -94,18 +95,16 @@ the product might satisfy one of the default applicability criteria.
 
 =head2 QC outcomes
 
-A valid Manual QC outcome is one of the values from the library
-qc outcomes dictionary (mqc_library_outcome_dict table of the
-npg_qc database), i.e. one of 'Accepted', 'Rejected' or 'Undecided'
-outcomes. If the final_qc_outcome flag of this class' instance is
-set to true, the outcome is also marked as 'Final', otherwise it is
-marked as 'Preliminary' (examples: 'Accepted Final',
-'Rejected Preliminary'). By default the final_qc_outcome flag is
-false and the produced outcomes are preliminary.
+A valid Manual QC outcome is either 'Accepted' or 'Rejected'. If the
+C<final_qc_outcome> flag is set to false (the default), the outcome is also
+marked as 'Preliminary', otherwise it is marked as 'Final' (examples:
+'Accepted Final', 'Rejected Preliminary').
 
-The type of QC outcome can be configured within the Robo QC
-section of product configuration. The default type is library
-Manual QC.
+The type of QC outcome can be configured directly within the Robo QC
+section of product configuration both for default and study-specific
+RoboQC definitions. Library Manual QC is configured as C<qc_type: "mqc">.
+The other recognised type is C<mqc_lane>, which is only compatible with
+lane-level entities.
 
 =head2 Rules for assignment of the QC outcome
 
@@ -323,12 +322,16 @@ sub execute {
     return;
   }
 
+  # Computing the outcome type early. If this value is configured incorrectly,
+  # an error is raised by the code below.
+  my $outcome_type = $self->_outcome_type();
+
   $self->result->criteria($self->_criteria);
   $self->result->criteria_md5(
     $self->result->generate_checksum4data($self->result->criteria)
   );
-  my $err;
 
+  my $err;
   try {
     $self->result->pass($self->evaluate);
   } catch {
@@ -336,8 +339,7 @@ sub execute {
     $self->final_qc_outcome && croak $err;
     $self->result->add_comment($err);
   };
-  not $err and $self->result->qc_outcome(
-    $self->generate_qc_outcome($self->_outcome_type()));
+  not $err and $self->result->qc_outcome($self->generate_qc_outcome($outcome_type));
 
   return;
 }
@@ -795,13 +797,20 @@ sub _outcome_type {
   my $self = shift;
 
   my $outcome_type = $self->_robo_config()->{$QC_TYPE_KEY};
-  if ($outcome_type) {
-    if (none { $outcome_type eq $_ } @VALID_QC_TYPES) {
-      croak "Invalid QC type '$outcome_type' in a robo config for " .
-            $self->_entity_desc;
-    }
-  } else {
-    $outcome_type = $QC_TYPE_DEFAULT;
+  if (!$outcome_type) {
+    $outcome_type = $self->_applicable_criteria()->[0]->{$QC_TYPE_KEY};
+  }
+  $outcome_type ||= $QC_TYPE_LIB;
+
+  if (none { $outcome_type eq $_ } @VALID_QC_TYPES) {
+    croak "Invalid QC type '$outcome_type' in a RoboQC config for " .
+      $self->_entity_desc;
+  }
+
+  if (($outcome_type eq $QC_TYPE_LANE) &&
+      defined $self->composition->get_component(0)->tag_index) {
+    croak sprintf '%s evaluation cannot be performed on a non-lane entity %s',
+      $QC_TYPE_LANE, $self->_entity_desc;
   }
 
   return $outcome_type;

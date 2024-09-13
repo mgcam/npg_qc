@@ -278,13 +278,13 @@ __PACKAGE__->might_have (
 =head2 uqc_outcome_ent
 
 Type: might_have
-Related object: L<npg_qc::Schema::Result::MqcLibraryOutcomeEnt>
+Related object: L<npg_qc::Schema::Result::MqcOutcomeEnt>
 
 =cut
 
 __PACKAGE__->might_have (
-  'uqc_outcome_ent',
-  'npg_qc::Schema::Result::UqcOutcomeEnt',
+  'mqc_lane_outcome_ent',
+  'npg_qc::Schema::Result::MqcOutcomeEnt',
   { 'foreign.id_seq_composition' => 'self.id_seq_composition' },
   {
     is_deferrable => 1,
@@ -389,8 +389,12 @@ around [qw/update insert/] => sub {
 
 sub _save_qc_outcome {
   my ($self, $qc_outcome) = @_;
+
+  my $OUTCOME_KEY_NAME = 'mqc_outcome';
+
   #####
   # What kind of qc outcome we need to update/create?
+  # The value velow can be either 'mqc_outcome' or 'mqc_lane_outcome'.
   my $entity_type = (grep { $_ =~ /_outcome\Z/xms } keys %{$qc_outcome})[0];
   #####
   # Find an existing qc outcome in the outcomes table or
@@ -399,6 +403,11 @@ sub _save_qc_outcome {
     {'id_seq_composition' => $self->id_seq_composition});
 
   my $update_or_create = 1;
+  # When it comes to saving the outcome, it should be under the 'mqc_outcome' key.
+  if ($entity_type ne $OUTCOME_KEY_NAME) {
+    $qc_outcome->{$OUTCOME_KEY_NAME} = $qc_outcome->{$entity_type};
+    delete $qc_outcome->{$entity_type};
+  }
   try {
     $update_or_create = $qc_row->valid4update($qc_outcome);
   } catch {
@@ -408,7 +417,7 @@ sub _save_qc_outcome {
     # no mqc update and no error. We might be archiving post-manual QC.
     if (($err =~ /Final\ outcome\ cannot\ be\ updated/xms) and
         (not $qc_row->mqc_outcome
-         ->is_final_outcome_description($qc_outcome->{'mqc_outcome'}))) {
+         ->is_final_outcome_description($qc_outcome->{$OUTCOME_KEY_NAME}))) {
       $update_or_create = 0;
     } else {
       croak "Not saving review result. $err for " . $qc_row->composition->freeze();

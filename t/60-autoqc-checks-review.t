@@ -461,7 +461,7 @@ subtest 'evaluation within the execute method' => sub {
     qc_in     => $dir,
     rpt_list  => $rpt_list);
   throws_ok { $check->execute }
-    qr/Invalid QC type \'someqc\' in a robo config/,
+    qr/Invalid QC type \'someqc\' in a RoboQC config/,
     'error if qc outcome type is not recignised';
 
   my $target = "$dir/29524#2.bam_flagstats.json";
