@@ -106,6 +106,10 @@ RoboQC definitions. Library Manual QC is configured as C<qc_type: "mqc">.
 The other recognised type is C<mqc_lane>, which is only compatible with
 lane-level entities.
 
+If the Robo QC type is not defined directly in the top-level section,
+it should be defined for each of the criteria individually. The definition
+on teh criteria level takes precedence.
+
 =head2 Rules for assignment of the QC outcome
 
 The rules below apply to a single criteria object.
@@ -287,6 +291,15 @@ sub can_run {
     }
   }
 
+  if ($can_run) {
+    try {
+      $self->_outcome_type();
+    } catch {
+      $message = "Error assessing RoboQC type: $_";
+      $can_run = 0;
+    };
+  }
+
   if (!$can_run && $message) {
     $self->result->add_comment($message);
     carp sprintf 'Review check cannot be run for %s . Reason: %s',
@@ -322,10 +335,6 @@ sub execute {
     return;
   }
 
-  # Computing the outcome type early. If this value is configured incorrectly,
-  # an error is raised by the code below.
-  my $outcome_type = $self->_outcome_type();
-
   $self->result->criteria($self->_criteria);
   $self->result->criteria_md5(
     $self->result->generate_checksum4data($self->result->criteria)
@@ -339,7 +348,7 @@ sub execute {
     $self->final_qc_outcome && croak $err;
     $self->result->add_comment($err);
   };
-  not $err and $self->result->qc_outcome($self->generate_qc_outcome($outcome_type));
+  not $err and $self->result->qc_outcome($self->generate_qc_outcome());
 
   return;
 }
@@ -366,28 +375,24 @@ sub evaluate {
 
 Returns a hash reference representing the QC outcome.
 
-  my $m_outcome = $r->generate_qc_outcome('mqc');
+  my $m_outcome = $r->generate_qc_outcome();
   
 =cut
 
 sub generate_qc_outcome {
-  my ($self, $outcome_type) = @_;
+  my $self = shift;
 
-  $outcome_type or croak 'outcome type should be defined';
-
-  my $package_name = 'npg_qc::Schema::Mqc::OutcomeDict';
-  my $pass = $self->result->pass;
   #####
-  # Any of Accepted, Rejected, Undecided outcomes can be returned here
-  my $outcome = $package_name->generate_short_description(
-    $self->final_qc_outcome ? 1 : 0, $pass);
+  # Since the pass value is always defined, only Accepted and Rejected
+  # outcomes are returned here.
+  my $outcome = npg_qc::Schema::Mqc::OutcomeDict->generate_short_description(
+    $self->final_qc_outcome ? 1 : 0, $self->result->pass
+  );
 
-  $outcome_type .= '_outcome';
-  my $outcome_info = { $outcome_type => $outcome,
-                       timestamp   => create_current_timestamp(),
-                       username    => $ROBO_KEY};
+  return { $self->_outcome_type . '_outcome' => $outcome,
+           timestamp => create_current_timestamp(),
+           username => $ROBO_KEY };
 
-  return $outcome_info;
 }
 
 =head2 lims
@@ -579,6 +584,34 @@ sub _build__criteria {
   my @c = uniq sort @{$self->_applicable_criteria->[0]->{$ACCEPTANCE_CRITERIA_KEY}};
 
   return @c ? {$CONJUNCTION_OP => \@c} : {};
+}
+
+has '_outcome_type' => (
+  isa        => 'Str',
+  is         => 'ro',
+  lazy_build => 1,
+);
+sub _build__outcome_type {
+  my $self = shift;
+
+  my $outcome_type = $self->_applicable_criteria()->[0]->{$QC_TYPE_KEY};
+  if (!$outcome_type) {
+    $outcome_type = $self->_robo_config()->{$QC_TYPE_KEY};
+  }
+  $outcome_type ||= $QC_TYPE_LIB;
+
+  if (none { $outcome_type eq $_ } @VALID_QC_TYPES) {
+    croak "Invalid QC type '$outcome_type' in a RoboQC config for " .
+      $self->_entity_desc;
+  }
+
+  if (($outcome_type eq $QC_TYPE_LANE) &&
+      defined $self->composition->get_component(0)->tag_index) {
+    croak sprintf '%s evaluation cannot be performed on a non-lane entity %s',
+      $QC_TYPE_LANE, $self->_entity_desc;
+  }
+
+  return $outcome_type;
 }
 
 has '_expressions'  => (
@@ -791,29 +824,6 @@ sub _evaluate_expression {
 
   # Evaluate and return the outcome.
   return $evaluator->($obj);
-}
-
-sub _outcome_type {
-  my $self = shift;
-
-  my $outcome_type = $self->_robo_config()->{$QC_TYPE_KEY};
-  if (!$outcome_type) {
-    $outcome_type = $self->_applicable_criteria()->[0]->{$QC_TYPE_KEY};
-  }
-  $outcome_type ||= $QC_TYPE_LIB;
-
-  if (none { $outcome_type eq $_ } @VALID_QC_TYPES) {
-    croak "Invalid QC type '$outcome_type' in a RoboQC config for " .
-      $self->_entity_desc;
-  }
-
-  if (($outcome_type eq $QC_TYPE_LANE) &&
-      defined $self->composition->get_component(0)->tag_index) {
-    croak sprintf '%s evaluation cannot be performed on a non-lane entity %s',
-      $QC_TYPE_LANE, $self->_entity_desc;
-  }
-
-  return $outcome_type;
 }
 
 __PACKAGE__->meta->make_immutable();

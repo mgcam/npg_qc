@@ -401,7 +401,7 @@ subtest 'single expression evaluation' => sub {
 };
 
 subtest 'evaluation within the execute method' => sub {
-  plan tests => 40;
+  plan tests => 42;
 
   local $ENV{NPG_CACHED_SAMPLESHEET_FILE} =
     't/data/autoqc/review/samplesheet_29524.csv';
@@ -460,9 +460,12 @@ subtest 'evaluation within the execute method' => sub {
     conf_path => "$test_data_dir/unknown_qc_type",
     qc_in     => $dir,
     rpt_list  => $rpt_list);
-  throws_ok { $check->execute }
+  is ($check->can_run, 0, 'invalid QC type - check cannot run');
+  lives_ok { $check->execute } 'invalid QC type - no error';
+  like ($check->result->comments,
     qr/Invalid QC type \'someqc\' in a RoboQC config/,
-    'error if qc outcome type is not recignised';
+    'invalid QC type - error is logged'
+  );
 
   my $target = "$dir/29524#2.bam_flagstats.json";
 
